@@ -8,7 +8,9 @@ const sessionSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    refreshToken: {
+    // Lưu hash SHA-256 của refresh token, không lưu plaintext.
+    // Xem utils/tokenHelper.js.
+    refreshTokenHash: {
       type: String,
       required: true,
       unique: true,

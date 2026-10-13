@@ -6,12 +6,18 @@ import {
   markAsSeen,
 } from "../controllers/conversationController.js";
 import { checkFriendship } from "../middlewares/friendMiddleware.js";
+import { checkConversationMember } from "../middlewares/conversationMiddleware.js";
 
 const router = express.Router();
 
 router.post("/", checkFriendship, createConversation);
 router.get("/", getConversations);
-router.get("/:conversationId/messages", getMessages);
-router.patch("/:conversationId/seen", markAsSeen);
+// mọi route theo :conversationId phải verify người gọi là thành viên (chống IDOR)
+router.get(
+  "/:conversationId/messages",
+  checkConversationMember,
+  getMessages
+);
+router.patch("/:conversationId/seen", checkConversationMember, markAsSeen);
 
 export default router;

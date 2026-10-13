@@ -1,5 +1,6 @@
 import Conversation from "../models/Conversation.js";
 import Message from "../models/Message.js";
+import { findOrCreateDirectConversation } from "../utils/conversationHelper.js";
 import { io } from "../socket/index.js";
 
 export const createConversation = async (req, res) => {
@@ -24,20 +25,7 @@ export const createConversation = async (req, res) => {
     if (type === "direct") {
       const participantId = memberIds[0];
 
-      conversation = await Conversation.findOne({
-        type: "direct",
-        "participants.userId": { $all: [userId, participantId] },
-      });
-
-      if (!conversation) {
-        conversation = new Conversation({
-          type: "direct",
-          participants: [{ userId }, { userId: participantId }],
-          lastMessageAt: new Date(),
-        });
-
-        await conversation.save();
-      }
+      conversation = await findOrCreateDirectConversation(userId, participantId);
     }
 
     if (type === "group") {
@@ -139,21 +127,32 @@ export const getConversations = async (req, res) => {
 export const getMessages = async (req, res) => {
   try {
     const { conversationId } = req.params;
-    const { limit = 50, cursor } = req.query;
+    const { cursor } = req.query;
+
+    // Cap limit từ client: chặn ?limit=999999 làm sập server
+    const requested = Number(req.query.limit);
+    const limit = Number.isFinite(requested)
+      ? Math.min(Math.max(Math.floor(requested), 1), 100)
+      : 50;
 
     const query = { conversationId };
 
     if (cursor) {
-      query.createdAt = { $lt: new Date(cursor) };
+      const cursorDate = new Date(cursor);
+      if (Number.isNaN(cursorDate.getTime())) {
+        return res.status(400).json({ message: "cursor không hợp lệ" });
+      }
+      query.createdAt = { $lt: cursorDate };
     }
 
     let messages = await Message.find(query)
       .sort({ createdAt: -1 })
-      .limit(Number(limit) + 1);
+      .limit(limit + 1)
+      .lean();
 
     let nextCursor = null;
 
-    if (messages.length > Number(limit)) {
+    if (messages.length > limit) {
       const nextMessage = messages[messages.length - 1];
       nextCursor = nextMessage.createdAt.toISOString();
       messages.pop();
@@ -190,11 +189,8 @@ export const markAsSeen = async (req, res) => {
     const { conversationId } = req.params;
     const userId = req.user._id.toString();
 
-    const conversation = await Conversation.findById(conversationId).lean();
-
-    if (!conversation) {
-      return res.status(404).json({ message: "Conversation không tồn tại" });
-    }
+    // conversation đã được checkConversationMember nạp sẵn (đã verify membership)
+    const conversation = req.conversation;
 
     const last = conversation.lastMessage;
 
@@ -202,37 +198,40 @@ export const markAsSeen = async (req, res) => {
       return res.status(200).json({ message: "Không có tin nhắn để mark as seen" });
     }
 
-    if (last.senderId.toString() === userId) {
+    if (last.senderId?.toString() === userId) {
       return res.status(200).json({ message: "Sender không cần mark as seen" });
     }
 
+    // cập nhật bằng $addToSet/$set có đường dẫn thay vì save() cả document
     const updated = await Conversation.findByIdAndUpdate(
       conversationId,
       {
         $addToSet: { seenBy: userId },
         $set: { [`unreadCounts.${userId}`]: 0 },
       },
-      {
-        new: true,
-      },
+      { new: true },
     );
+
+    if (!updated) {
+      return res.status(404).json({ message: "Conversation không tồn tại" });
+    }
 
     io.to(conversationId).emit("read-message", {
       conversation: updated,
       lastMessage: {
-        _id: updated?.lastMessage._id,
-        content: updated?.lastMessage.content,
-        createdAt: updated?.lastMessage.createdAt,
+        _id: updated?.lastMessage?._id,
+        content: updated?.lastMessage?.content,
+        createdAt: updated?.lastMessage?.createdAt,
         sender: {
-          _id: updated?.lastMessage.senderId,
+          _id: updated?.lastMessage?.senderId,
         },
       },
     });
 
     return res.status(200).json({
       message: "Marked as seen",
-      seenBy: updated?.sennBy || [],
-      myUnreadCount: updated?.unreadCounts[userId] || 0,
+      seenBy: updated?.seenBy || [],
+      myUnreadCount: updated?.unreadCounts?.get?.(userId) ?? updated?.unreadCounts?.[userId] ?? 0,
     });
   } catch (error) {
     console.error("Lỗi khi mark as seen", error);

@@ -1,10 +1,27 @@
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
 
+// Whitelist loại file được phép upload — chặn exe/html/svg... đội lốt ảnh.
+const ALLOWED_MIME = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+]);
+
 export const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
     fileSize: 1024 * 1024 * 1, // 1MB
+    files: 1,
+  },
+  fileFilter: (req, file, cb) => {
+    if (!ALLOWED_MIME.has(file.mimetype)) {
+      const err = new Error("Chỉ chấp nhận file ảnh (JPEG, PNG, GIF, WebP)");
+      err.status = 400;
+      return cb(err, false);
+    }
+    cb(null, true);
   },
 });
 

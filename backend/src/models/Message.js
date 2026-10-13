@@ -16,6 +16,7 @@ const messageSchema = new mongoose.Schema(
     content: {
       type: String,
       trim: true,
+      maxlength: 2000, // chặn document MongoDB phình vô hạn từ client
     },
     imgUrl: {
       type: String,
