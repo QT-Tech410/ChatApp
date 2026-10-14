@@ -8,6 +8,7 @@ import {
 } from "../utils/messageHelper.js";
 import { findOrCreateDirectConversation } from "../utils/conversationHelper.js";
 import { io } from "../socket/index.js";
+import { cacheService } from "../services/cacheService.js";
 
 export const sendDirectMessage = async (req, res) => {
   try {
@@ -72,6 +73,11 @@ export const sendDirectMessage = async (req, res) => {
 
     emitNewMessage(io, conversation, message);
 
+    await cacheService.invalidateConversation(
+      conversation._id,
+      conversation.participants.map((p) => p.userId)
+    );
+
     return res.status(201).json({ message });
   } catch (error) {
     console.error("Lỗi xảy ra khi gửi tin nhắn trực tiếp", error);
@@ -109,6 +115,11 @@ export const sendGroupMessage = async (req, res) => {
 
     await conversation.save();
     emitNewMessage(io, conversation, message);
+
+    await cacheService.invalidateConversation(
+      conversation._id,
+      conversation.participants.map((p) => p.userId)
+    );
 
     return res.status(201).json({ message });
   } catch (error) {
@@ -158,6 +169,11 @@ export const deleteMessage = async (req, res) => {
       conversationId: message.conversationId.toString(),
       content: message.content,
     });
+
+    await cacheService.invalidateConversation(
+      message.conversationId,
+      conversation?.participants?.map((p) => p.userId) || []
+    );
 
     return res.status(200).json({
       message: "Thu hồi tin nhắn thành công",
@@ -218,6 +234,11 @@ export const editMessage = async (req, res) => {
     io.to(message.conversationId.toString()).emit("message-edited", {
       message,
     });
+
+    await cacheService.invalidateConversation(
+      message.conversationId,
+      conversation?.participants?.map((p) => p.userId) || []
+    );
 
     return res.status(200).json({
       message: "Chỉnh sửa tin nhắn thành công",

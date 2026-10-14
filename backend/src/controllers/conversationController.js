@@ -2,6 +2,7 @@ import Conversation from "../models/Conversation.js";
 import Message from "../models/Message.js";
 import { findOrCreateDirectConversation } from "../utils/conversationHelper.js";
 import { io } from "../socket/index.js";
+import { cacheService } from "../services/cacheService.js";
 
 export const createConversation = async (req, res) => {
   try {
@@ -75,6 +76,11 @@ export const createConversation = async (req, res) => {
       io.to(memberIds[0]).emit("new-group", formatted);
     }
 
+    await cacheService.invalidateConversation(conversation._id, [
+      userId,
+      ...memberIds,
+    ]);
+
     return res.status(201).json({ conversation: formatted });
   } catch (error) {
     console.error("Lỗi khi tạo conversation", error);
@@ -84,9 +90,17 @@ export const createConversation = async (req, res) => {
 
 export const getConversations = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = req.user._id.toString();
+    const cacheKey = `user_convos:${userId}`;
+
+    // Kiểm tra cache tầng nóng
+    const cached = await cacheService.get(cacheKey);
+    if (cached) {
+      return res.status(200).json({ conversations: cached });
+    }
+
     const conversations = await Conversation.find({
-      "participants.userId": userId,
+      "participants.userId": req.user._id,
     })
       .sort({ lastMessageAt: -1, updatedAt: -1 })
       .populate({
@@ -117,6 +131,9 @@ export const getConversations = async (req, res) => {
       };
     });
 
+    // Lưu cache tầng nóng (TTL 120s)
+    await cacheService.set(cacheKey, formatted, 120);
+
     return res.status(200).json({ conversations: formatted });
   } catch (error) {
     console.error("Lỗi xảy ra khi lấy conversations", error);
@@ -134,6 +151,18 @@ export const getMessages = async (req, res) => {
     const limit = Number.isFinite(requested)
       ? Math.min(Math.max(Math.floor(requested), 1), 100)
       : 50;
+
+    // Cache trang đầu tiên (trang được đọc nhiều nhất)
+    const cacheKey = !cursor
+      ? `convo_msgs:${conversationId}:limit:${limit}`
+      : null;
+
+    if (cacheKey) {
+      const cached = await cacheService.get(cacheKey);
+      if (cached) {
+        return res.status(200).json(cached);
+      }
+    }
 
     const query = { conversationId };
 
@@ -165,10 +194,16 @@ export const getMessages = async (req, res) => {
 
     messages = messages.reverse();
 
-    return res.status(200).json({
+    const responseData = {
       messages,
       nextCursor,
-    });
+    };
+
+    if (cacheKey) {
+      await cacheService.set(cacheKey, responseData, 60);
+    }
+
+    return res.status(200).json(responseData);
   } catch (error) {
     console.error("Lỗi xảy ra khi lấy messages", error);
     return res.status(500).json({ message: "Lỗi hệ thống" });
@@ -232,6 +267,8 @@ export const markAsSeen = async (req, res) => {
         },
       },
     });
+
+    await cacheService.del(`user_convos:${userId}`);
 
     return res.status(200).json({
       message: "Marked as seen",
@@ -297,6 +334,11 @@ export const addMembersToGroup = async (req, res) => {
       io.to(userId).emit("new-group", formatted);
     });
 
+    await cacheService.invalidateConversation(
+      conversationId,
+      conversation.participants.map((p) => p.userId)
+    );
+
     return res.status(200).json({
       message: "Thêm thành viên thành công",
       conversation: formatted,
@@ -360,6 +402,12 @@ export const removeMemberFromGroup = async (req, res) => {
     io.to(conversationId).emit("group-updated", formatted);
     io.to(memberId).emit("removed-from-group", { conversationId });
 
+    await cacheService.invalidateConversation(conversationId, [
+      callerId,
+      memberId,
+      ...conversation.participants.map((p) => p.userId),
+    ]);
+
     return res.status(200).json({
       message: isSelfLeaving ? "Đã rời nhóm thành công" : "Đã xoá thành viên khỏi nhóm",
       conversation: formatted,
@@ -403,6 +451,11 @@ export const updateGroupInfo = async (req, res) => {
     const formatted = { ...conversation.toObject(), participants };
 
     io.to(conversationId).emit("group-updated", formatted);
+
+    await cacheService.invalidateConversation(
+      conversationId,
+      conversation.participants.map((p) => p.userId)
+    );
 
     return res.status(200).json({
       message: "Cập nhật thông tin nhóm thành công",

@@ -12,12 +12,13 @@ import {
   checkFriendship,
   checkGroupMembership,
 } from "../middlewares/friendMiddleware.js";
+import { messageRateLimiter } from "../middlewares/messageRateLimit.js";
 
 const router = express.Router();
 
 router.post("/upload", upload.single("file"), uploadMessageImage);
-router.post("/direct", checkFriendship, sendDirectMessage);
-router.post("/group", checkGroupMembership, sendGroupMessage);
+router.post("/direct", messageRateLimiter, checkFriendship, sendDirectMessage);
+router.post("/group", messageRateLimiter, checkGroupMembership, sendGroupMessage);
 router.delete("/:messageId", deleteMessage);
 router.patch("/:messageId", editMessage);
 
