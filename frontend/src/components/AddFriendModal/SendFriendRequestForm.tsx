@@ -24,32 +24,31 @@ const SendFriendRequestForm = ({
   return (
     <form onSubmit={onSubmit}>
       <div className="space-y-4">
-        <span className="success-message">
-          Tìm thấy <span className="font-semibold">@{searchedUsername}</span> rồi nè
-          🎉
-        </span>
+        <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-medium">
+          Đã tìm thấy người dùng: <span className="font-semibold">@{searchedUsername}</span>
+        </div>
 
-        <div className="space-y-4">
+        <div className="space-y-1.5">
           <Label
             htmlFor="message"
-            className="text-sm font-semibold"
+            className="text-xs font-semibold text-foreground"
           >
-            Giới thiệu
+            Lời nhắn kết bạn
           </Label>
           <Textarea
             id="message"
             rows={3}
-            placeholder="Chào bạn ~ Có thể kết bạn được không?..."
-            className="glass border-border/50 focus:border-primary/50 transition-smooth resize-none"
+            placeholder="Xin chào, mình kết bạn nhé!..."
+            className="text-sm bg-background border-border resize-none"
             {...register("message")}
           />
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="gap-2 sm:gap-2">
           <Button
             type="button"
             variant="outline"
-            className="flex-1 glass hover:text-destructive"
+            className="flex-1"
             onClick={onBack}
           >
             Quay lại
@@ -58,13 +57,13 @@ const SendFriendRequestForm = ({
           <Button
             type="submit"
             disabled={loading}
-            className="flex-1 bg-gradient-chat text-white hover:opactity-90 transition-smooth"
+            className="flex-1"
           >
             {loading ? (
               <span>Đang gửi...</span>
             ) : (
               <>
-                <UserPlus className="size-4 mr-2" /> Kết Bạn
+                <UserPlus className="size-4 mr-2" /> Gửi lời mời
               </>
             )}
           </Button>

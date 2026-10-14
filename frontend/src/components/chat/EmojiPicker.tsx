@@ -13,20 +13,29 @@ const EmojiPicker = ({ onChange }: EmojiPickerProps) => {
 
   return (
     <Popover>
-      <PopoverTrigger className="cursor-pointer">
-        <Smile className="size-4" />
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="size-8 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          title="Chọn biểu tượng cảm xúc"
+          aria-label="Chọn biểu tượng cảm xúc"
+        >
+          <Smile className="size-4" />
+        </button>
       </PopoverTrigger>
 
       <PopoverContent
-        side="right"
-        sideOffset={40}
-        className="bg-tranparent border-none shadow-none drop-shadow-none mb-12"
+        side="top"
+        align="end"
+        sideOffset={8}
+        className="p-0 border-none bg-transparent shadow-xl mb-2 z-50"
       >
         <Picker
           theme={isDark ? "dark" : "light"}
           data={data}
-          onEmojiSelect={(emoji: any) => onChange(emoji.native)}
-          emojiSize={24}
+          onEmojiSelect={(emoji: { native: string }) => onChange(emoji.native)}
+          emojiSize={22}
+          previewPosition="none"
         />
       </PopoverContent>
     </Popover>

@@ -36,53 +36,53 @@ const SearchForm = ({
       <div className="space-y-2">
         <Label
           htmlFor="username"
-          className="text-sm font-semibold"
+          className="text-xs font-semibold text-foreground"
         >
-          Tìm bằng username
+          Tìm kiếm theo tên người dùng (@username)
         </Label>
 
         <Input
           id="username"
-          placeholder="Gõ tên username vào đây..."
-          className="glass border-border/50 focus:border-primary/50 transition-smooth"
+          placeholder="Nhập username cần tìm..."
           {...register("username", {
-            required: "Username không được bỏ trống",
+            required: "Tên người dùng không được để trống",
           })}
-        ></Input>
+        />
         {errors.username && (
-          <p className="error-message">{errors.username.message}</p>
+          <p className="text-destructive text-xs font-medium mt-1">
+            {errors.username.message}
+          </p>
         )}
 
         {isFound === false && (
-          <span className="error-message">
-            Không tìm thấy
-            <span className="font-semibold">@{searchedUsername}</span>
-          </span>
+          <p className="text-destructive text-xs font-medium mt-1">
+            Không tìm thấy người dùng <span className="font-semibold">@{searchedUsername}</span>
+          </p>
         )}
       </div>
 
-      <DialogFooter>
+      <DialogFooter className="gap-2 sm:gap-2">
         <DialogClose asChild>
           <Button
             type="button"
             variant="outline"
-            className="flex-1 glass hover:text-destructive"
+            className="flex-1"
             onClick={onCancel}
           >
-            Cancel
+            Hủy
           </Button>
         </DialogClose>
 
         <Button
           type="submit"
           disabled={loading || !usernameValue?.trim()}
-          className="flex-1 bg-gradient-chat text-white hover:opacity-90 transition-smooth"
+          className="flex-1"
         >
           {loading ? (
-            <span>Đang tìm ...</span>
+            <span>Đang tìm kiếm...</span>
           ) : (
             <>
-              <Search className="size-4 mr-2" /> Tìm
+              <Search className="size-4 mr-2" /> Tìm kiếm
             </>
           )}
         </Button>

@@ -1,38 +1,37 @@
+import { useState } from "react";
 import { useFriendStore } from "@/stores/useFriendStore";
-import { Card } from "../ui/card";
-import { Dialog, DialogTrigger } from "../ui/dialog";
-import { MessageCircle } from "lucide-react";
+import { Dialog } from "../ui/dialog";
+import { MessageSquarePlus } from "lucide-react";
 import FriendListModal from "../createNewChat/FriendListModal";
+import { Button } from "../ui/button";
 
 const CreateNewChat = () => {
+  const [open, setOpen] = useState(false);
   const { getFriends } = useFriendStore();
 
-  const handleGetFriends = async () => {
+  const handleOpen = async () => {
+    setOpen(true);
     await getFriends();
   };
 
   return (
-    <div className="flex gap-2">
-      <Card
-        className="flex-1 p-3 glass hover:shadow-soft transition-smooth cursor-pointer group/card"
-        onClick={handleGetFriends}
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={handleOpen}
+        className="w-full justify-start gap-2.5 h-10 px-3 border-sidebar-border bg-sidebar hover:bg-sidebar-accent text-sidebar-foreground shadow-2xs font-normal"
       >
-        <Dialog>
-          <DialogTrigger>
-            <div className="flex items-center gap-4">
-              <div className="size-8 bg-gradient-chat rounded-full flex items-center justify-center group-hover/card:scale-110 transition-bounce">
-                <MessageCircle className="size-4 text-white" />
-              </div>
-              <span className="text-sm font-medium capitalize">
-                gửi tin nhắn mới
-              </span>
-            </div>
-          </DialogTrigger>
+        <div className="size-6 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
+          <MessageSquarePlus className="size-3.5" />
+        </div>
+        <span className="text-sm font-medium">Bắt đầu hội thoại mới</span>
+      </Button>
 
-          <FriendListModal />
-        </Dialog>
-      </Card>
-    </div>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <FriendListModal onSelect={() => setOpen(false)} />
+      </Dialog>
+    </>
   );
 };
 

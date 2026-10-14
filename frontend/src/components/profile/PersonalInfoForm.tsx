@@ -1,4 +1,4 @@
-import { Heart } from "lucide-react";
+import { User as UserIcon } from "lucide-react";
 import {
   Card,
   CardHeader,
@@ -9,7 +9,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import type { User } from "@/types/user";
 
 type EditableField = {
@@ -33,50 +32,50 @@ const PersonalInfoForm = ({ userInfo }: Props) => {
   if (!userInfo) return null;
 
   return (
-    <Card className="glass-strong border-border/30">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Heart className="size-5 text-primary" />
-          Thông tin cá nhân
+    <Card className="border border-border shadow-xs bg-card rounded-xl p-0">
+      <CardHeader className="p-5 pb-3">
+        <CardTitle className="flex items-center gap-2 text-base font-semibold">
+          <UserIcon className="size-4 text-primary" />
+          Thông tin chi tiết
         </CardTitle>
-        <CardDescription>
-          Cập nhật chi tiết cá nhân và thông tin hồ sơ của bạn
+        <CardDescription className="text-xs text-muted-foreground">
+          Xem thông tin cá nhân và tài khoản của bạn
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <CardContent className="p-5 pt-0 space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
           {PERSONAL_FIELDS.map(({ key, label, type }) => (
             <div
               key={key}
-              className="space-y-2"
+              className="space-y-1.5"
             >
-              <Label htmlFor={key}>{label}</Label>
+              <Label htmlFor={key} className="text-xs font-medium text-foreground">
+                {label}
+              </Label>
               <Input
                 id={key}
                 type={type ?? "text"}
                 value={userInfo[key] ?? ""}
-                onChange={() => {}}
-                className="glass-light border-border/30"
+                readOnly
+                className="bg-muted/40 border-border text-foreground text-xs cursor-default"
               />
             </div>
           ))}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="bio">Giới thiệu</Label>
+        <div className="space-y-1.5">
+          <Label htmlFor="bio" className="text-xs font-medium text-foreground">
+            Tiểu sử
+          </Label>
           <Textarea
             id="bio"
-            rows={3}
-            value={userInfo.bio ?? ""}
-            onChange={() => {}}
-            className="glass-light border-border/30 resize-none"
+            rows={2}
+            value={userInfo.bio ?? "Chưa cập nhật tiểu sử."}
+            readOnly
+            className="bg-muted/40 border-border text-foreground text-xs resize-none cursor-default"
           />
         </div>
-
-        <Button className="w-full md:w-auto bg-gradient-primary hover:opacity-90 transition-opacity">
-          Lưu thay đổi
-        </Button>
       </CardContent>
     </Card>
   );

@@ -19,14 +19,22 @@ import { toast } from "sonner";
 import { useChatStore } from "@/stores/useChatStore";
 
 const NewGroupChatModal = () => {
+  const [open, setOpen] = useState(false);
   const [groupName, setGroupName] = useState("");
   const [search, setSearch] = useState("");
   const { friends, getFriends } = useFriendStore();
   const [invitedUsers, setInvitedUsers] = useState<Friend[]>([]);
   const { loading, createConversation } = useChatStore();
 
-  const handleGetFriends = async () => {
-    await getFriends();
+  const handleOpenChange = async (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (isOpen) {
+      await getFriends();
+    } else {
+      setGroupName("");
+      setSearch("");
+      setInvitedUsers([]);
+    }
   };
 
   const handleSelectFriend = (friend: Friend) => {
@@ -41,6 +49,10 @@ const NewGroupChatModal = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     try {
       e.preventDefault();
+      if (!groupName.trim()) {
+        toast.warning("Vui lòng nhập tên nhóm");
+        return;
+      }
       if (invitedUsers.length === 0) {
         toast.warning("Bạn phải mời ít nhất 1 thành viên vào nhóm");
         return;
@@ -48,14 +60,15 @@ const NewGroupChatModal = () => {
 
       await createConversation(
         "group",
-        groupName,
+        groupName.trim(),
         invitedUsers.map((u) => u._id)
       );
 
-      setSearch("");
-      setInvitedUsers([]);
+      toast.success("Tạo nhóm trò chuyện thành công");
+      setOpen(false);
     } catch (error) {
       console.error("Lỗi xảy ra khi handleSubmit trong NewGroupChatModal:", error);
+      toast.error("Không thể tạo nhóm. Vui lòng thử lại!");
     }
   };
 
@@ -66,63 +79,66 @@ const NewGroupChatModal = () => {
   );
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button
           variant="ghost"
-          onClick={handleGetFriends}
-          className="flex z-10 justify-center items-center size-5 rounded-full hover:bg-sidebar-accent transition cursor-pointer"
+          size="icon-sm"
+          className="size-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-sidebar-accent"
+          title="Tạo nhóm chat mới"
+          aria-label="Tạo nhóm chat mới"
         >
           <Users className="size-4" />
-          <span className="sr-only">Tạo nhóm</span>
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-[425px] border-none">
+      <DialogContent className="sm:max-w-md p-6">
         <DialogHeader>
-          <DialogTitle className="capitalize">tạo nhóm chat mới</DialogTitle>
+          <DialogTitle className="text-lg font-semibold flex items-center gap-2">
+            <Users className="size-5 text-primary" />
+            Tạo nhóm trò chuyện mới
+          </DialogTitle>
         </DialogHeader>
 
         <form
-          className="space-y-4"
+          className="space-y-4 mt-2"
           onSubmit={handleSubmit}
         >
-          {/* tên nhóm */}
-          <div className="space-y-2">
+          {/* Tên nhóm */}
+          <div className="space-y-1.5">
             <Label
               htmlFor="groupName"
-              className="text-sm font-semibold"
+              className="text-xs font-semibold text-foreground"
             >
               Tên nhóm
             </Label>
             <Input
               id="groupName"
-              placeholder="Gõ tên nhóm vào đây..."
-              className="glass border-border/50 focus:border-primary/50 transition-smooth"
+              placeholder="Nhập tên nhóm trò chuyện..."
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
               required
             />
           </div>
 
-          {/* mời thành viên */}
-          <div className="space-y-2">
+          {/* Mời thành viên */}
+          <div className="space-y-1.5">
             <Label
               htmlFor="invite"
-              className="text-sm font-semibold"
+              className="text-xs font-semibold text-foreground"
             >
-              Mời thành viên
+              Mời thành viên ({invitedUsers.length} đã chọn)
             </Label>
 
             <Input
               id="invite"
-              placeholder="Tìm theo tên hiển thị..."
+              placeholder="Tìm theo tên bạn bè..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="flex-1"
             />
 
-            {/* danh sách gợi ý */}
+            {/* Danh sách gợi ý */}
             {search && filteredFriends.length > 0 && (
               <IniviteSuggestionList
                 filteredFriends={filteredFriends}
@@ -130,21 +146,21 @@ const NewGroupChatModal = () => {
               />
             )}
 
-            {/* danh sách user đã chọn */}
+            {/* Danh sách user đã chọn */}
             <SelectedUsersList
               invitedUsers={invitedUsers}
               onRemove={handleRemoveFriend}
             />
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="pt-2">
             <Button
               type="submit"
-              disabled={loading}
-              className="flex-1 bg-gradient-chat text-white hover:opacity-90 transition-smooth"
+              disabled={loading || !groupName.trim() || invitedUsers.length === 0}
+              className="w-full font-medium"
             >
               {loading ? (
-                <span>Đang tạo...</span>
+                <span>Đang tạo nhóm...</span>
               ) : (
                 <>
                   <UserPlus className="size-4 mr-2" />

@@ -1,14 +1,22 @@
 import { cn } from "@/lib/utils";
 
-const StatusBadge = ({ status }: { status: "online" | "offline" }) => {
+interface StatusBadgeProps {
+  status: "online" | "offline";
+  className?: string;
+}
+
+const StatusBadge = ({ status, className }: StatusBadgeProps) => {
+  const isOnline = status === "online";
   return (
-    <div
+    <span
       className={cn(
-        "absolute -bottom-0.5 -right-0.5 size-4 rounded-full border-2 border-card",
-        status === "online" && "status-online",
-        status === "offline" && "status-offline"
+        "absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-background shrink-0 select-none",
+        isOnline ? "bg-emerald-500" : "bg-slate-400 dark:bg-slate-600",
+        className
       )}
-    ></div>
+      title={isOnline ? "Trực tuyến" : "Ngoại tuyến"}
+      aria-label={isOnline ? "Trực tuyến" : "Ngoại tuyến"}
+    />
   );
 };
 

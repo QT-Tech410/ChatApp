@@ -10,27 +10,37 @@ interface RequestItemProps {
 
 const FriendRequestItem = ({ requestInfo, actions, type }: RequestItemProps) => {
   if (!requestInfo) {
-    return;
+    return null;
   }
   const info = type === "sent" ? requestInfo.to : requestInfo.from;
 
   if (!info) {
-    return;
+    return null;
   }
 
   return (
-    <div className="flex items-center justify-between rounded-lg shadow-md border border-primary-foreground p-3">
-      <div className="flex items-center gap-3">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-border/70 p-3 bg-card shadow-2xs">
+      <div className="flex items-start gap-3 min-w-0">
         <UserAvatar
           type="sidebar"
           name={info.displayName}
+          avatarUrl={info.avatarUrl}
         />
-        <div>
-          <p className="font-medium">{info.displayName}</p>
-          <p className="text-sm text-muted-foreground">@{info.username}</p>
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-sm text-foreground truncate">
+            {info.displayName}
+          </p>
+          <p className="text-xs text-muted-foreground truncate">
+            @{info.username}
+          </p>
+          {requestInfo.message && (
+            <p className="text-xs text-foreground/80 bg-muted/50 p-1.5 rounded-md mt-1 italic border border-border/40">
+              "{requestInfo.message}"
+            </p>
+          )}
         </div>
       </div>
-      {actions}
+      <div className="shrink-0 flex items-center justify-end">{actions}</div>
     </div>
   );
 };

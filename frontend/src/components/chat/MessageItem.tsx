@@ -1,8 +1,6 @@
 import { cn, formatMessageTime } from "@/lib/utils";
 import type { Conversation, Message, Participant } from "@/types/chat";
 import UserAvatar from "./UserAvatar";
-import { Card } from "../ui/card";
-import { Badge } from "../ui/badge";
 import { useState } from "react";
 import { useChatStore } from "@/stores/useChatStore";
 import {
@@ -156,7 +154,7 @@ const MessageItem = ({
           )}
         >
           {isEditing ? (
-            <div className="flex items-center gap-1.5 w-full bg-card p-1.5 rounded-xl border border-primary/30 shadow-sm">
+            <div className="flex items-center gap-1.5 w-full bg-card p-1.5 rounded-xl border border-primary/40 shadow-xs">
               <Input
                 value={editText}
                 onChange={(e) => setEditText(e.target.value)}
@@ -187,20 +185,20 @@ const MessageItem = ({
               </Button>
             </div>
           ) : (
-            <Card
+            <div
               className={cn(
-                "p-3 space-y-2",
+                "px-3.5 py-2.5 space-y-1.5 text-sm",
                 message.isDeleted
-                  ? "bg-muted/40 border border-dashed border-border"
+                  ? "bg-muted/40 border border-border/60 text-muted-foreground rounded-xl"
                   : message.isOwn
-                    ? "chat-bubble-sent border-0"
-                    : "chat-bubble-received",
+                    ? "bg-primary text-primary-foreground rounded-2xl rounded-br-xs shadow-xs"
+                    : "bg-secondary text-secondary-foreground rounded-2xl rounded-bl-xs border border-border/50 shadow-xs",
               )}
             >
               {/* Trích dẫn tin nhắn trả lời */}
               {message.replyTo && (
-                <div className="border-l-2 border-primary/70 pl-2 py-0.5 text-xs text-muted-foreground/90 bg-background/20 rounded-r mb-1">
-                  <span className="font-semibold text-foreground/80">
+                <div className="border-l-2 border-current/40 pl-2 py-0.5 text-xs opacity-90 rounded-r mb-1">
+                  <span className="font-semibold">
                     {message.replyTo.senderId?.displayName || "Người dùng"}
                   </span>
                   :{" "}
@@ -216,7 +214,7 @@ const MessageItem = ({
                 <img
                   src={message.imgUrl}
                   alt="Tin nhắn ảnh"
-                  className="max-h-80 w-full rounded-xl object-cover"
+                  className="max-h-72 w-full rounded-xl object-cover border border-border/20"
                 />
               )}
 
@@ -226,20 +224,30 @@ const MessageItem = ({
                   href={message.fileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2.5 p-2 rounded-lg bg-background/50 hover:bg-background/80 transition-colors border border-border/40 group/file my-1"
+                  className={cn(
+                    "flex items-center gap-2.5 p-2 rounded-lg transition-colors border group/file my-1",
+                    message.isOwn
+                      ? "bg-black/10 border-white/20 text-primary-foreground hover:bg-black/20"
+                      : "bg-background/70 border-border/60 hover:bg-background text-foreground"
+                  )}
                 >
-                  <div className="size-8 rounded bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                  <div
+                    className={cn(
+                      "size-8 rounded flex items-center justify-center shrink-0",
+                      message.isOwn ? "bg-white/20 text-white" : "bg-primary/10 text-primary"
+                    )}
+                  >
                     <FileText className="size-4" />
                   </div>
                   <div className="flex-1 min-w-0 pr-1">
-                    <p className="text-xs font-medium truncate text-foreground group-hover/file:underline">
+                    <p className="text-xs font-medium truncate group-hover/file:underline">
                       {message.fileName || "Tệp đính kèm"}
                     </p>
-                    <p className="text-[10px] text-muted-foreground uppercase">
+                    <p className="text-[10px] opacity-75 uppercase">
                       {message.fileType || "Tài liệu"}
                     </p>
                   </div>
-                  <Download className="size-3.5 text-muted-foreground group-hover/file:text-foreground shrink-0" />
+                  <Download className="size-3.5 opacity-75 group-hover/file:opacity-100 shrink-0" />
                 </a>
               )}
 
@@ -250,32 +258,31 @@ const MessageItem = ({
                 </p>
               ) : (
                 message.content && (
-                  <p className="text-sm leading-relaxed break-words">
+                  <p className="leading-relaxed break-words whitespace-pre-wrap">
                     {message.content}
                     {message.isEdited && (
-                      <span className="text-[10px] ml-1.5 opacity-60 italic">
+                      <span className="text-[10px] ml-1.5 opacity-75 italic">
                         (đã sửa)
                       </span>
                     )}
                   </p>
                 )
               )}
-            </Card>
+            </div>
           )}
 
-          {/* seen/ delivered */}
+          {/* Trạng thái gửi / xem tin nhắn */}
           {message.isOwn && message._id === selectedConvo.lastMessage?._id && (
-            <Badge
-              variant="outline"
+            <span
               className={cn(
-                "text-xs px-1.5 py-0.5 h-4 border-0",
+                "text-[10px] px-1.5 py-0.5 rounded-full font-medium leading-none select-none",
                 lastMessageStatus === "seen"
-                  ? "bg-primary/20 text-primary"
+                  ? "bg-primary/15 text-primary"
                   : "bg-muted text-muted-foreground",
               )}
             >
-              {lastMessageStatus}
-            </Badge>
+              {lastMessageStatus === "seen" ? "Đã xem" : "Đã gửi"}
+            </span>
           )}
         </div>
       </div>

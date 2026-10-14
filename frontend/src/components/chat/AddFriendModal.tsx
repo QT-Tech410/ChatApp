@@ -6,6 +6,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../ui/dialog";
+import { Button } from "../ui/button";
 import { UserPlus } from "lucide-react";
 import type { User } from "@/types/user";
 import { useFriendStore } from "@/stores/useFriendStore";
@@ -20,6 +21,7 @@ export interface IFormValues {
 }
 
 const AddFriendModal = () => {
+  const [open, setOpen] = useState(false);
   const [isFound, setIsFound] = useState<boolean | null>(null);
   const [searchUser, setSearchUser] = useState<User>();
   const [searchedUsername, setSearchedUsername] = useState("");
@@ -64,58 +66,66 @@ const AddFriendModal = () => {
     try {
       const message = await addFriend(searchUser._id, data.message.trim());
       toast.success(message || "Đã gửi lời mời kết bạn thành công");
-
-      handleCancel();
+      handleClose();
     } catch (error: any) {
       toast.error(error.message || "Gửi lời mời kết bạn thất bại");
     }
   });
 
-  const handleCancel = () => {
+  const handleClose = () => {
+    setOpen(false);
     reset();
     setSearchedUsername("");
     setIsFound(null);
+    setSearchUser(undefined);
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={(val) => {
+      if (!val) handleClose();
+      else setOpen(true);
+    }}>
       <DialogTrigger asChild>
-        <div className="flex justify-center items-center size-5 rounded-full hover:bg-sidebar-accent cursor-pointer z-10">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="size-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-sidebar-accent"
+          title="Thêm bạn mới"
+          aria-label="Thêm bạn mới"
+        >
           <UserPlus className="size-4" />
-          <span className="sr-only">Kết bạn</span>
-        </div>
+        </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-[425px] border-none">
+      <DialogContent className="sm:max-w-md p-6">
         <DialogHeader>
-          <DialogTitle>Kết Bạn</DialogTitle>
+          <DialogTitle className="text-lg font-semibold flex items-center gap-2">
+            <UserPlus className="size-5 text-primary" />
+            Kết bạn mới
+          </DialogTitle>
         </DialogHeader>
 
         {!isFound && (
-          <>
-            <SearchForm
-              register={register}
-              errors={errors}
-              usernameValue={usernameValue}
-              loading={loading}
-              isFound={isFound}
-              searchedUsername={searchedUsername}
-              onSubmit={handleSearch}
-              onCancel={handleCancel}
-            />
-          </>
+          <SearchForm
+            register={register}
+            errors={errors}
+            usernameValue={usernameValue}
+            loading={loading}
+            isFound={isFound}
+            searchedUsername={searchedUsername}
+            onSubmit={handleSearch}
+            onCancel={handleClose}
+          />
         )}
 
         {isFound && (
-          <>
-            <SendFriendRequestForm
-              register={register}
-              loading={loading}
-              searchedUsername={searchedUsername}
-              onSubmit={handleSend}
-              onBack={() => setIsFound(null)}
-            />
-          </>
+          <SendFriendRequestForm
+            register={register}
+            loading={loading}
+            searchedUsername={searchedUsername}
+            onSubmit={handleSend}
+            onBack={() => setIsFound(null)}
+          />
         )}
       </DialogContent>
     </Dialog>

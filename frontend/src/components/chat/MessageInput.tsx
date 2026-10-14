@@ -163,15 +163,15 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
     docInputRef.current?.click();
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
   };
 
   return (
-    <div className="flex items-center gap-2 p-3 min-h-[56px] bg-background">
+    <div className="flex items-center gap-2 p-3 min-h-[56px] bg-background border-t border-border/60">
       <input
         ref={fileInputRef}
         type="file"
@@ -188,55 +188,53 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
       />
 
       <Button
+        type="button"
         variant="ghost"
         size="icon"
-        className="hover:bg-primary/10 transition-smooth"
+        className="text-muted-foreground hover:text-foreground hover:bg-muted"
         onClick={openImagePicker}
         disabled={isUploading}
         title="Gửi hình ảnh"
+        aria-label="Gửi hình ảnh"
       >
         <ImagePlus className="size-4" />
       </Button>
 
       <Button
+        type="button"
         variant="ghost"
         size="icon"
-        className="hover:bg-primary/10 transition-smooth"
+        className="text-muted-foreground hover:text-foreground hover:bg-muted"
         onClick={openDocPicker}
         disabled={isUploading}
         title="Đính kèm tệp tin tài liệu"
+        aria-label="Đính kèm tệp tin tài liệu"
       >
         <Paperclip className="size-4" />
       </Button>
 
       <div className="flex-1 relative">
         <Input
-          onKeyPress={handleKeyPress}
+          onKeyDown={handleKeyDown}
           value={value}
           onChange={handleInputChange}
           placeholder="Soạn tin nhắn..."
-          className="pr-20 h-9 bg-white border-border/50 focus:border-primary/50 transition-smooth resize-none"
+          className="pr-10 h-10 bg-muted/40 border-border/70 focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary rounded-lg text-sm text-foreground"
         />
-        <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
-          <Button
-            asChild
-            variant="ghost"
-            size="icon"
-            className="size-8 hover:bg-primary/10 transition-smooth"
-          >
-            <div>
-              <EmojiPicker
-                onChange={(emoji: string) => setValue(`${value}${emoji}`)}
-              />
-            </div>
-          </Button>
+        <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center">
+          <EmojiPicker
+            onChange={(emoji: string) => setValue(`${value}${emoji}`)}
+          />
         </div>
       </div>
 
       <Button
+        type="button"
         onClick={sendMessage}
-        className="bg-gradient-chat hover:shadow-glow transition-smooth hover:scale-105"
+        className="size-10 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 shrink-0"
         disabled={!value.trim()}
+        title="Gửi tin nhắn"
+        aria-label="Gửi tin nhắn"
       >
         <Send className="size-4 text-white" />
       </Button>

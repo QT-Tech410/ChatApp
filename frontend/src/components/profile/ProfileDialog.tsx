@@ -14,62 +14,58 @@ interface ProfileDialogProps {
 
 const ProfileDialog = ({ open, setOpen }: ProfileDialogProps) => {
   const { user } = useAuthStore();
+
   return (
     <Dialog
       open={open}
       onOpenChange={setOpen}
     >
-      <DialogContent className="overflow-y-auto max-h-[95vh] p-0 bg-transparent border-0 shadow-2xl">
-        <div className="bg-gradient-glass">
-          <div className="max-w-4xl mx-auto p-4">
-            {/* heading */}
-            <DialogHeader className="mb-6">
-              <DialogTitle className="text-2xl font-bold text-foreground">
-                Profile & Settings
-              </DialogTitle>
-            </DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-6 bg-card border border-border shadow-lg rounded-2xl beautiful-scrollbar">
+        <DialogHeader className="mb-4">
+          <DialogTitle className="text-xl font-bold text-foreground tracking-tight">
+            Tài khoản & Thiết lập
+          </DialogTitle>
+        </DialogHeader>
 
-            <ProfileCard user={user} />
+        <ProfileCard user={user} />
 
-            <Tabs
-              defaultValue="personal"
-              className="my-4"
+        <Tabs
+          defaultValue="personal"
+          className="my-3"
+        >
+          <TabsList className="grid w-full grid-cols-3 bg-muted/60 p-1 rounded-xl">
+            <TabsTrigger
+              value="personal"
+              className="rounded-lg text-xs font-medium"
             >
-              <TabsList className="grid w-full grid-cols-3 glass-light">
-                <TabsTrigger
-                  value="personal"
-                  className="data-[state=active]:glass-strong"
-                >
-                  Tài Khoản
-                </TabsTrigger>
-                <TabsTrigger
-                  value="preferences"
-                  className="data-[state=active]:glass-strong"
-                >
-                  Cấu Hình
-                </TabsTrigger>
-                <TabsTrigger
-                  value="privacy"
-                  className="data-[state=active]:glass-strong"
-                >
-                  Bảo Mật
-                </TabsTrigger>
-              </TabsList>
+              Hồ sơ
+            </TabsTrigger>
+            <TabsTrigger
+              value="preferences"
+              className="rounded-lg text-xs font-medium"
+            >
+              Giao diện
+            </TabsTrigger>
+            <TabsTrigger
+              value="privacy"
+              className="rounded-lg text-xs font-medium"
+            >
+              Bảo mật
+            </TabsTrigger>
+          </TabsList>
 
-              <TabsContent value="personal">
-                <PersonalInfoForm userInfo={user} />
-              </TabsContent>
+          <TabsContent value="personal" className="mt-4">
+            <PersonalInfoForm userInfo={user} />
+          </TabsContent>
 
-              <TabsContent value="preferences">
-                <PreferencesForm />
-              </TabsContent>
+          <TabsContent value="preferences" className="mt-4">
+            <PreferencesForm />
+          </TabsContent>
 
-              <TabsContent value="privacy">
-                <PrivacySettings />
-              </TabsContent>
-            </Tabs>
-          </div>
-        </div>
+          <TabsContent value="privacy" className="mt-4">
+            <PrivacySettings />
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
