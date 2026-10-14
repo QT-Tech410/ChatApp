@@ -84,6 +84,24 @@ io.on("connection", async (socket) => {
 
   socket.join(userId);
 
+  socket.on("typing", ({ conversationId }) => {
+    if (conversationId) {
+      socket.to(conversationId).emit("user-typing", {
+        conversationId,
+        userId,
+      });
+    }
+  });
+
+  socket.on("stop-typing", ({ conversationId }) => {
+    if (conversationId) {
+      socket.to(conversationId).emit("user-stop-typing", {
+        conversationId,
+        userId,
+      });
+    }
+  });
+
   socket.on("disconnect", () => {
     const remaining = onlineUsers.get(userId);
     if (!remaining) return;

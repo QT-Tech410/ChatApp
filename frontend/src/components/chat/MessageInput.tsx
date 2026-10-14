@@ -9,19 +9,47 @@ import { useChatStore } from "@/stores/useChatStore";
 import { toast } from "sonner";
 import { chatService } from "@/services/chatService";
 
+import { useSocketStore } from "@/stores/useSocketStore";
+
 const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
   const { user } = useAuthStore();
   const { sendDirectMessage, sendGroupMessage } = useChatStore();
   const [value, setValue] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   if (!user) return null;
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setValue(val);
+
+    const socket = useSocketStore.getState().socket;
+    if (socket && val.trim().length > 0) {
+      socket.emit("typing", { conversationId: selectedConvo._id });
+
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+
+      typingTimeoutRef.current = setTimeout(() => {
+        socket.emit("stop-typing", { conversationId: selectedConvo._id });
+      }, 1500);
+    }
+  };
 
   const sendMessage = async () => {
     if (!value.trim()) return;
     const currValue = value;
     setValue("");
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    useSocketStore
+      .getState()
+      .socket?.emit("stop-typing", { conversationId: selectedConvo._id });
 
     try {
       if (selectedConvo.type === "direct") {
@@ -108,7 +136,7 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
         <Input
           onKeyPress={handleKeyPress}
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={handleInputChange}
           placeholder="Soạn tin nhắn..."
           className="pr-20 h-9 bg-white border-border/50 focus:border-primary/50 transition-smooth resize-none"
         />

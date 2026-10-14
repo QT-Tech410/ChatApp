@@ -50,6 +50,19 @@ export interface Message {
   senderId: string;
   content: string | null;
   imgUrl?: string | null;
+  isDeleted?: boolean;
+  isEdited?: boolean;
+  replyTo?: {
+    _id: string;
+    content: string | null;
+    imgUrl?: string | null;
+    isDeleted?: boolean;
+    senderId: {
+      _id: string;
+      displayName: string;
+      avatarUrl?: string | null;
+    };
+  } | null;
   updatedAt?: string | null;
   createdAt: string;
   isOwn?: boolean;

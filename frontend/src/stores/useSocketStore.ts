@@ -77,6 +77,40 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       useChatStore.getState().addConvo(conversation);
       socket.emit("join-conversation", conversation._id);
     });
+
+    // message deleted (recalled)
+    socket.on("message-deleted", ({ messageId, conversationId }) => {
+      useChatStore.getState().removeMessageFromState(messageId, conversationId);
+    });
+
+    // message edited
+    socket.on("message-edited", ({ message }) => {
+      useChatStore.getState().updateMessageInState(message);
+    });
+
+    // typing indicators
+    socket.on("user-typing", ({ conversationId, userId }) => {
+      useChatStore.getState().setTyping(conversationId, userId, true);
+    });
+
+    socket.on("user-stop-typing", ({ conversationId, userId }) => {
+      useChatStore.getState().setTyping(conversationId, userId, false);
+    });
+
+    // group updated
+    socket.on("group-updated", (conversation) => {
+      useChatStore.getState().updateConversation(conversation);
+    });
+
+    // removed from group
+    socket.on("removed-from-group", ({ conversationId }) => {
+      const { conversations, activeConversationId } = useChatStore.getState();
+      useChatStore.setState({
+        conversations: conversations.filter((c) => c._id !== conversationId),
+        activeConversationId:
+          activeConversationId === conversationId ? null : activeConversationId,
+      });
+    });
   },
   disconnectSocket: () => {
     const socket = get().socket;

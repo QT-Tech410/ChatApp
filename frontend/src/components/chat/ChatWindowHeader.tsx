@@ -8,6 +8,8 @@ import StatusBadge from "./StatusBadge";
 import GroupChatAvatar from "./GroupChatAvatar";
 import { useSocketStore } from "@/stores/useSocketStore";
 
+import { GroupManagementModal } from "./GroupManagementModal";
+
 const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
   const { conversations, activeConversationId } = useChatStore();
   const { user } = useAuthStore();
@@ -32,45 +34,60 @@ const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
     if (!user || !otherUser) return;
   }
 
+  const isOnline = onlineUsers.includes(otherUser?._id ?? "");
+
   return (
-    <header className="sticky top-0 z-10 px-4 py-2 flex items-center bg-background">
-      <div className="flex items-center gap-2 w-full">
-        <SidebarTrigger className="-ml-1 text-foreground" />
-        <Separator
-          orientation="vertical"
-          className="mr-2 data-[orientation=vertical]:h-4"
-        />
+    <header className="sticky top-0 z-10 px-4 py-2 flex items-center bg-background border-b border-border/40">
+      <div className="flex items-center justify-between w-full">
+        <div className="flex items-center gap-2">
+          <SidebarTrigger className="-ml-1 text-foreground" />
+          <Separator
+            orientation="vertical"
+            className="mr-2 data-[orientation=vertical]:h-4"
+          />
 
-        <div className="p-2 w-full flex items-center gap-3">
-          {/* avatar */}
-          <div className="relative">
-            {chat.type === "direct" ? (
-              <>
-                <UserAvatar
-                  type={"sidebar"}
-                  name={otherUser?.displayName || "ChatApp"}
-                  avatarUrl={otherUser?.avatarUrl || undefined}
+          <div className="p-1 flex items-center gap-3">
+            {/* avatar */}
+            <div className="relative">
+              {chat.type === "direct" ? (
+                <>
+                  <UserAvatar
+                    type={"sidebar"}
+                    name={otherUser?.displayName || "ChatApp"}
+                    avatarUrl={otherUser?.avatarUrl || undefined}
+                  />
+                  <StatusBadge status={isOnline ? "online" : "offline"} />
+                </>
+              ) : (
+                <GroupChatAvatar
+                  participants={chat.participants}
+                  type="sidebar"
                 />
-                {/* todo: socket io */}
-                <StatusBadge
-                  status={
-                    onlineUsers.includes(otherUser?._id ?? "") ? "online" : "offline"
-                  }
-                />
-              </>
-            ) : (
-              <GroupChatAvatar
-                participants={chat.participants}
-                type="sidebar"
-              />
-            )}
+              )}
+            </div>
+
+            {/* name & status */}
+            <div>
+              <h2 className="font-semibold text-foreground text-sm">
+                {chat.type === "direct" ? otherUser?.displayName : chat.group?.name}
+              </h2>
+              <p className="text-[11px] text-muted-foreground">
+                {chat.type === "direct"
+                  ? isOnline
+                    ? "Đang trực tuyến"
+                    : "Ngoại tuyến"
+                  : `${chat.participants.length} thành viên`}
+              </p>
+            </div>
           </div>
-
-          {/* name */}
-          <h2 className="font-semibold text-foreground">
-            {chat.type === "direct" ? otherUser?.displayName : chat.group?.name}
-          </h2>
         </div>
+
+        {/* Nút cài đặt nhóm nếu là group */}
+        {chat.type === "group" && (
+          <div className="flex items-center gap-1">
+            <GroupManagementModal chat={chat} />
+          </div>
+        )}
       </div>
     </header>
   );

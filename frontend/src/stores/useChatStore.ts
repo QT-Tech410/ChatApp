@@ -14,6 +14,7 @@ export const useChatStore = create<ChatState>()(
       convoLoading: false, // convo loading
       messageLoading: false,
       loading: false,
+      typingUsers: {},
 
       setActiveConversation: (id) => set({ activeConversationId: id }),
       reset: () => {
@@ -23,6 +24,21 @@ export const useChatStore = create<ChatState>()(
           activeConversationId: null,
           convoLoading: false,
           messageLoading: false,
+          typingUsers: {},
+        });
+      },
+      setTyping: (conversationId, userId, isTyping) => {
+        set((state) => {
+          const current = state.typingUsers[conversationId] || [];
+          const updated = isTyping
+            ? Array.from(new Set([...current, userId]))
+            : current.filter((id) => id !== userId);
+          return {
+            typingUsers: {
+              ...state.typingUsers,
+              [conversationId]: updated,
+            },
+          };
         });
       },
       fetchConversations: async () => {
@@ -84,14 +100,15 @@ export const useChatStore = create<ChatState>()(
           set({ messageLoading: false });
         }
       },
-      sendDirectMessage: async (recipientId, content, imgUrl) => {
+      sendDirectMessage: async (recipientId, content, imgUrl, replyTo) => {
         try {
           const { activeConversationId } = get();
           await chatService.sendDirectMessage(
             recipientId,
             content,
             imgUrl,
-            activeConversationId || undefined
+            activeConversationId || undefined,
+            replyTo
           );
           set((state) => ({
             conversations: state.conversations.map((c) =>
@@ -102,9 +119,14 @@ export const useChatStore = create<ChatState>()(
           console.error("Lỗi xảy ra khi gửi direct message", error);
         }
       },
-      sendGroupMessage: async (conversationId, content, imgUrl) => {
+      sendGroupMessage: async (conversationId, content, imgUrl, replyTo) => {
         try {
-          await chatService.sendGroupMessage(conversationId, content, imgUrl);
+          await chatService.sendGroupMessage(
+            conversationId,
+            content,
+            imgUrl,
+            replyTo
+          );
           set((state) => ({
             conversations: state.conversations.map((c) =>
               c._id === get().activeConversationId ? { ...c, seenBy: [] } : c
@@ -112,6 +134,127 @@ export const useChatStore = create<ChatState>()(
           }));
         } catch (error) {
           console.error("Lỗi xảy ra gửi group message", error);
+        }
+      },
+      deleteMessage: async (messageId) => {
+        try {
+          await chatService.deleteMessage(messageId);
+        } catch (error) {
+          console.error("Lỗi xảy ra khi thu hồi tin nhắn:", error);
+          throw error;
+        }
+      },
+      editMessage: async (messageId, content) => {
+        try {
+          await chatService.editMessage(messageId, content);
+        } catch (error) {
+          console.error("Lỗi xảy ra khi chỉnh sửa tin nhắn:", error);
+          throw error;
+        }
+      },
+      updateMessageInState: (message) => {
+        const { user } = useAuthStore.getState();
+        message.isOwn = message.senderId === user?._id;
+        const convoId = message.conversationId;
+
+        set((state) => {
+          const convoMessages = state.messages[convoId];
+          if (!convoMessages) return state;
+
+          return {
+            messages: {
+              ...state.messages,
+              [convoId]: {
+                ...convoMessages,
+                items: convoMessages.items.map((m) =>
+                  m._id === message._id ? { ...m, ...message } : m
+                ),
+              },
+            },
+            conversations: state.conversations.map((c) =>
+              c._id === convoId && c.lastMessage?._id === message._id
+                ? {
+                    ...c,
+                    lastMessage: {
+                      ...c.lastMessage,
+                      content: message.content || "",
+                    },
+                  }
+                : c
+            ),
+          };
+        });
+      },
+      removeMessageFromState: (messageId, conversationId) => {
+        set((state) => {
+          const convoMessages = state.messages[conversationId];
+          if (!convoMessages) return state;
+
+          return {
+            messages: {
+              ...state.messages,
+              [conversationId]: {
+                ...convoMessages,
+                items: convoMessages.items.map((m) =>
+                  m._id === messageId
+                    ? {
+                        ...m,
+                        isDeleted: true,
+                        content: "Tin nhắn đã được thu hồi",
+                        imgUrl: null,
+                      }
+                    : m
+                ),
+              },
+            },
+            conversations: state.conversations.map((c) =>
+              c._id === conversationId && c.lastMessage?._id === messageId
+                ? {
+                    ...c,
+                    lastMessage: {
+                      ...c.lastMessage,
+                      content: "Tin nhắn đã được thu hồi",
+                    },
+                  }
+                : c
+            ),
+          };
+        });
+      },
+      addMembersToGroup: async (conversationId, memberIds) => {
+        try {
+          const updated = await chatService.addMembersToGroup(
+            conversationId,
+            memberIds
+          );
+          get().updateConversation(updated);
+        } catch (error) {
+          console.error("Lỗi khi thêm thành viên nhóm:", error);
+          throw error;
+        }
+      },
+      removeMemberFromGroup: async (conversationId, memberId) => {
+        try {
+          const updated = await chatService.removeMemberFromGroup(
+            conversationId,
+            memberId
+          );
+          get().updateConversation(updated);
+        } catch (error) {
+          console.error("Lỗi khi xoá thành viên:", error);
+          throw error;
+        }
+      },
+      updateGroupInfo: async (conversationId, name) => {
+        try {
+          const updated = await chatService.updateGroupInfo(
+            conversationId,
+            name
+          );
+          get().updateConversation(updated);
+        } catch (error) {
+          console.error("Lỗi khi đổi tên nhóm:", error);
+          throw error;
         }
       },
       addMessage: async (message) => {
@@ -140,8 +283,8 @@ export const useChatStore = create<ChatState>()(
                 ...state.messages,
                 [convoId]: {
                   items: [...prevItems, message],
-                  hasMore: state.messages[convoId].hasMore,
-                  nextCursor: state.messages[convoId].nextCursor ?? undefined,
+                  hasMore: state.messages[convoId]?.hasMore ?? false,
+                  nextCursor: state.messages[convoId]?.nextCursor ?? undefined,
                 },
               },
             };

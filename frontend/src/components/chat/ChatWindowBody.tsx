@@ -1,4 +1,5 @@
 import { useChatStore } from "@/stores/useChatStore";
+import { useAuthStore } from "@/stores/useAuthStore";
 import ChatWelcomeScreen from "./ChatWelcomeScreen";
 import MessageItem from "./MessageItem";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -10,10 +11,15 @@ const ChatWindowBody = () => {
     conversations,
     messages: allMessages,
     fetchMessages,
+    typingUsers,
   } = useChatStore();
+  const { user: currentUser } = useAuthStore();
   const [lastMessageStatus, setLastMessageStatus] = useState<"delivered" | "seen">(
     "delivered"
   );
+
+  const activeTyping = typingUsers[activeConversationId || ""] || [];
+  const othersTyping = activeTyping.filter((id) => id !== currentUser?._id);
 
   const messages = allMessages[activeConversationId!]?.items ?? [];
   const reversedMessages = [...messages].reverse();
@@ -106,6 +112,25 @@ const ChatWindowBody = () => {
         className="flex flex-col-reverse overflow-y-auto overflow-x-hidden beautiful-scrollbar"
       >
         <div ref={messagesEndRef}></div>
+        {othersTyping.length > 0 && (
+          <div className="flex items-center gap-2 py-1.5 px-3 text-xs text-muted-foreground bg-background/50 rounded-full w-fit mb-2 shadow-xs border border-border/40">
+            <div className="flex gap-1 items-center">
+              <span className="size-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "0ms" }}></span>
+              <span className="size-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "150ms" }}></span>
+              <span className="size-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "300ms" }}></span>
+            </div>
+            <span>
+              {othersTyping
+                .map(
+                  (id) =>
+                    selectedConvo.participants.find((p) => p._id === id)
+                      ?.displayName || "Ai đó"
+                )
+                .join(", ")}{" "}
+              đang soạn tin...
+            </span>
+          </div>
+        )}
         <InfiniteScroll
           dataLength={messages.length}
           next={fetchMoreMessages}

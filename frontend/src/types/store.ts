@@ -43,6 +43,7 @@ export interface ChatState {
   convoLoading: boolean;
   messageLoading: boolean;
   loading: boolean;
+  typingUsers: Record<string, string[]>; // conversationId -> userIds
   reset: () => void;
 
   setActiveConversation: (id: string | null) => void;
@@ -51,13 +52,23 @@ export interface ChatState {
   sendDirectMessage: (
     recipientId: string,
     content: string,
-    imgUrl?: string
+    imgUrl?: string,
+    replyTo?: string
   ) => Promise<void>;
   sendGroupMessage: (
     conversationId: string,
     content: string,
-    imgUrl?: string
+    imgUrl?: string,
+    replyTo?: string
   ) => Promise<void>;
+  deleteMessage: (messageId: string) => Promise<void>;
+  editMessage: (messageId: string, content: string) => Promise<void>;
+  updateMessageInState: (message: Message) => void;
+  removeMessageFromState: (messageId: string, conversationId: string) => void;
+  setTyping: (conversationId: string, userId: string, isTyping: boolean) => void;
+  addMembersToGroup: (conversationId: string, memberIds: string[]) => Promise<void>;
+  removeMemberFromGroup: (conversationId: string, memberId: string) => Promise<void>;
+  updateGroupInfo: (conversationId: string, name: string) => Promise<void>;
   // add message
   addMessage: (message: Message) => Promise<void>;
   // update convo

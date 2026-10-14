@@ -15,9 +15,10 @@ export const chatService = {
   },
 
   async fetchMessages(id: string, cursor?: string): Promise<FetchMessageProps> {
-    const res = await api.get(
-      `/conversations/${id}/messages?limit=${pageLimit}&cursor=${cursor}`,
-    );
+    const query = cursor
+      ? `?limit=${pageLimit}&cursor=${encodeURIComponent(cursor)}`
+      : `?limit=${pageLimit}`;
+    const res = await api.get(`/conversations/${id}/messages${query}`);
 
     return { messages: res.data.messages, cursor: res.data.nextCursor };
   },
@@ -39,12 +40,14 @@ export const chatService = {
     content: string = "",
     imgUrl?: string,
     conversationId?: string,
+    replyTo?: string,
   ) {
     const res = await api.post("/messages/direct", {
       recipientId,
       content,
       imgUrl,
       conversationId,
+      replyTo,
     });
 
     return res.data.message;
@@ -54,13 +57,46 @@ export const chatService = {
     conversationId: string,
     content: string = "",
     imgUrl?: string,
+    replyTo?: string,
   ) {
     const res = await api.post("/messages/group", {
       conversationId,
       content,
       imgUrl,
+      replyTo,
     });
     return res.data.message;
+  },
+
+  async deleteMessage(messageId: string) {
+    const res = await api.delete(`/messages/${messageId}`);
+    return res.data;
+  },
+
+  async editMessage(messageId: string, content: string) {
+    const res = await api.patch(`/messages/${messageId}`, { content });
+    return res.data;
+  },
+
+  async addMembersToGroup(conversationId: string, memberIds: string[]) {
+    const res = await api.post(`/conversations/${conversationId}/members`, {
+      memberIds,
+    });
+    return res.data.conversation;
+  },
+
+  async removeMemberFromGroup(conversationId: string, memberId: string) {
+    const res = await api.delete(
+      `/conversations/${conversationId}/members/${memberId}`
+    );
+    return res.data.conversation;
+  },
+
+  async updateGroupInfo(conversationId: string, name: string) {
+    const res = await api.patch(`/conversations/${conversationId}/group`, {
+      name,
+    });
+    return res.data.conversation;
   },
 
   async markAsSeen(conversationId: string) {
