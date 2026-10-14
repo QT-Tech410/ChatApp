@@ -9,6 +9,7 @@ import GroupChatAvatar from "./GroupChatAvatar";
 import { useSocketStore } from "@/stores/useSocketStore";
 
 import { GroupManagementModal } from "./GroupManagementModal";
+import { MessageSearchModal } from "./MessageSearchModal";
 
 const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
   const { conversations, activeConversationId } = useChatStore();
@@ -82,12 +83,11 @@ const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
           </div>
         </div>
 
-        {/* Nút cài đặt nhóm nếu là group */}
-        {chat.type === "group" && (
-          <div className="flex items-center gap-1">
-            <GroupManagementModal chat={chat} />
-          </div>
-        )}
+        {/* Nút tác vụ (Tìm kiếm + Cài đặt nhóm) */}
+        <div className="flex items-center gap-1">
+          <MessageSearchModal conversationId={chat._id} />
+          {chat.type === "group" && <GroupManagementModal chat={chat} />}
+        </div>
       </div>
     </header>
   );

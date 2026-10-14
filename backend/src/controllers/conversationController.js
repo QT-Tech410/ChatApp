@@ -466,3 +466,39 @@ export const updateGroupInfo = async (req, res) => {
     return res.status(500).json({ message: "Lỗi hệ thống" });
   }
 };
+
+export const searchMessages = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const { q } = req.query;
+
+    if (!q || !q.trim()) {
+      return res.status(400).json({ message: "Vui lòng nhập từ khoá tìm kiếm" });
+    }
+
+    const keyword = q.trim();
+
+    // Tìm kiếm tin nhắn chưa bị thu hồi theo từ khoá (hỗ trợ tiếng Việt có dấu/không dấu)
+    const messages = await Message.find({
+      conversationId,
+      isDeleted: false,
+      content: { $regex: keyword, $options: "i" },
+    })
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .populate({
+        path: "senderId",
+        select: "displayName avatarUrl",
+      })
+      .lean();
+
+    return res.status(200).json({
+      query: keyword,
+      total: messages.length,
+      messages,
+    });
+  } catch (error) {
+    console.error("Lỗi khi tìm kiếm tin nhắn:", error);
+    return res.status(500).json({ message: "Lỗi hệ thống" });
+  }
+};

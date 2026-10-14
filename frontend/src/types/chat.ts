@@ -50,6 +50,9 @@ export interface Message {
   senderId: string;
   content: string | null;
   imgUrl?: string | null;
+  fileUrl?: string | null;
+  fileName?: string | null;
+  fileType?: string | null;
   isDeleted?: boolean;
   isEdited?: boolean;
   replyTo?: {

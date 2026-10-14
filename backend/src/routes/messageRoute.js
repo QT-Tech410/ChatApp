@@ -3,6 +3,7 @@ import express from "express";
 import {
   deleteMessage,
   editMessage,
+  getUploadSignatureController,
   sendDirectMessage,
   sendGroupMessage,
   uploadMessageImage,
@@ -16,6 +17,7 @@ import { messageRateLimiter } from "../middlewares/messageRateLimit.js";
 
 const router = express.Router();
 
+router.get("/upload-signature", getUploadSignatureController);
 router.post("/upload", upload.single("file"), uploadMessageImage);
 router.post("/direct", messageRateLimiter, checkFriendship, sendDirectMessage);
 router.post("/group", messageRateLimiter, checkGroupMembership, sendGroupMessage);

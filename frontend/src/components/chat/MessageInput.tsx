@@ -2,7 +2,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import type { Conversation } from "@/types/chat";
 import { useRef, useState } from "react";
 import { Button } from "../ui/button";
-import { ImagePlus, Send } from "lucide-react";
+import { ImagePlus, Paperclip, Send } from "lucide-react";
 import { Input } from "../ui/input";
 import EmojiPicker from "./EmojiPicker";
 import { useChatStore } from "@/stores/useChatStore";
@@ -17,6 +17,7 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
   const [value, setValue] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const docInputRef = useRef<HTMLInputElement | null>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   if (!user) return null;
@@ -101,8 +102,65 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
     }
   };
 
+  const handleDocChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Tệp tin vượt quá 10MB");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    setIsUploading(true);
+    try {
+      const fileUrl = await chatService.uploadMessageImage(formData);
+      const ext = file.name.split(".").pop()?.toUpperCase() || "FILE";
+      const fileData = {
+        fileUrl,
+        fileName: file.name,
+        fileType: ext,
+      };
+
+      if (selectedConvo.type === "direct") {
+        const otherUser = selectedConvo.participants.filter(
+          (p) => p._id !== user._id
+        )[0];
+        await sendDirectMessage(
+          otherUser._id,
+          value.trim(),
+          undefined,
+          undefined,
+          fileData
+        );
+      } else {
+        await sendGroupMessage(
+          selectedConvo._id,
+          value.trim(),
+          undefined,
+          undefined,
+          fileData
+        );
+      }
+      setValue("");
+      toast.success("Đã gửi tệp thành công");
+    } catch (error) {
+      console.error(error);
+      toast.error("Lỗi upload tệp tin. Hãy thử lại sau.");
+    } finally {
+      setIsUploading(false);
+      e.target.value = "";
+    }
+  };
+
   const openImagePicker = () => {
     fileInputRef.current?.click();
+  };
+
+  const openDocPicker = () => {
+    docInputRef.current?.click();
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -121,6 +179,13 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
         className="hidden"
         onChange={handleFileChange}
       />
+      <input
+        ref={docInputRef}
+        type="file"
+        accept=".pdf,.doc,.docx,.txt,.zip,.rar,.xlsx,.pptx"
+        className="hidden"
+        onChange={handleDocChange}
+      />
 
       <Button
         variant="ghost"
@@ -128,8 +193,20 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
         className="hover:bg-primary/10 transition-smooth"
         onClick={openImagePicker}
         disabled={isUploading}
+        title="Gửi hình ảnh"
       >
         <ImagePlus className="size-4" />
+      </Button>
+
+      <Button
+        variant="ghost"
+        size="icon"
+        className="hover:bg-primary/10 transition-smooth"
+        onClick={openDocPicker}
+        disabled={isUploading}
+        title="Đính kèm tệp tin tài liệu"
+      >
+        <Paperclip className="size-4" />
       </Button>
 
       <div className="flex-1 relative">

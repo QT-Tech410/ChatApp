@@ -9,16 +9,26 @@ import {
 import { findOrCreateDirectConversation } from "../utils/conversationHelper.js";
 import { io } from "../socket/index.js";
 import { cacheService } from "../services/cacheService.js";
+import { getUploadSignature } from "../libs/storage.js";
 
 export const sendDirectMessage = async (req, res) => {
   try {
-    const { recipientId, content, imgUrl, conversationId, replyTo } = req.body;
+    const {
+      recipientId,
+      content,
+      imgUrl,
+      fileUrl,
+      fileName,
+      fileType,
+      conversationId,
+      replyTo,
+    } = req.body;
     const senderId = req.user._id;
 
     let conversation;
 
-    if (!content && !imgUrl) {
-      return res.status(400).json({ message: "Thiếu nội dung hoặc ảnh" });
+    if (!content && !imgUrl && !fileUrl) {
+      return res.status(400).json({ message: "Thiếu nội dung, ảnh hoặc tệp tin" });
     }
 
     if (!recipientId) {
@@ -56,6 +66,9 @@ export const sendDirectMessage = async (req, res) => {
       senderId,
       content: content || "",
       imgUrl,
+      fileUrl,
+      fileName,
+      fileType,
       replyTo: replyTo && mongoose.Types.ObjectId.isValid(replyTo) ? replyTo : null,
     });
 
@@ -87,12 +100,20 @@ export const sendDirectMessage = async (req, res) => {
 
 export const sendGroupMessage = async (req, res) => {
   try {
-    const { conversationId, content, imgUrl, replyTo } = req.body;
+    const {
+      conversationId,
+      content,
+      imgUrl,
+      fileUrl,
+      fileName,
+      fileType,
+      replyTo,
+    } = req.body;
     const senderId = req.user._id;
     const conversation = req.conversation;
 
-    if (!content && !imgUrl) {
-      return res.status(400).json({ message: "Thiếu nội dung hoặc ảnh" });
+    if (!content && !imgUrl && !fileUrl) {
+      return res.status(400).json({ message: "Thiếu nội dung, ảnh hoặc tệp tin" });
     }
 
     const message = await Message.create({
@@ -100,6 +121,9 @@ export const sendGroupMessage = async (req, res) => {
       senderId,
       content: content || "",
       imgUrl,
+      fileUrl,
+      fileName,
+      fileType,
       replyTo: replyTo && mongoose.Types.ObjectId.isValid(replyTo) ? replyTo : null,
     });
 
@@ -267,5 +291,15 @@ export const uploadMessageImage = async (req, res) => {
   } catch (error) {
     console.error("Lỗi xảy ra khi upload ảnh tin nhắn", error);
     return res.status(500).json({ message: "Upload ảnh thất bại" });
+  }
+};
+
+export const getUploadSignatureController = async (req, res) => {
+  try {
+    const signatureData = getUploadSignature();
+    return res.status(200).json(signatureData);
+  } catch (error) {
+    console.error("Lỗi sinh chữ ký upload:", error);
+    return res.status(500).json({ message: "Lỗi hệ thống" });
   }
 };

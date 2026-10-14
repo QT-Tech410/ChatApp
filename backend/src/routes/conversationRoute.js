@@ -6,6 +6,7 @@ import {
   getMessages,
   markAsSeen,
   removeMemberFromGroup,
+  searchMessages,
   updateGroupInfo,
 } from "../controllers/conversationController.js";
 import { checkFriendship } from "../middlewares/friendMiddleware.js";
@@ -16,6 +17,11 @@ const router = express.Router();
 router.post("/", checkFriendship, createConversation);
 router.get("/", getConversations);
 // mọi route theo :conversationId phải verify người gọi là thành viên (chống IDOR)
+router.get(
+  "/:conversationId/messages/search",
+  checkConversationMember,
+  searchMessages
+);
 router.get(
   "/:conversationId/messages",
   checkConversationMember,

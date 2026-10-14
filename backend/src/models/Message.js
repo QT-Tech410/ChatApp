@@ -21,6 +21,15 @@ const messageSchema = new mongoose.Schema(
     imgUrl: {
       type: String,
     },
+    fileUrl: {
+      type: String,
+    },
+    fileName: {
+      type: String,
+    },
+    fileType: {
+      type: String, // "image" | "document"
+    },
     isDeleted: {
       type: Boolean,
       default: false,
@@ -41,6 +50,8 @@ const messageSchema = new mongoose.Schema(
 );
 
 messageSchema.index({ conversationId: 1, createdAt: -1 });
+// Text index hỗ trợ tìm kiếm toàn văn nội dung tin nhắn siêu tốc
+messageSchema.index({ content: "text" });
 
 const Message = mongoose.model("Message", messageSchema);
 

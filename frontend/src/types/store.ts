@@ -53,13 +53,15 @@ export interface ChatState {
     recipientId: string,
     content: string,
     imgUrl?: string,
-    replyTo?: string
+    replyTo?: string,
+    fileData?: { fileUrl?: string; fileName?: string; fileType?: string }
   ) => Promise<void>;
   sendGroupMessage: (
     conversationId: string,
     content: string,
     imgUrl?: string,
-    replyTo?: string
+    replyTo?: string,
+    fileData?: { fileUrl?: string; fileName?: string; fileType?: string }
   ) => Promise<void>;
   deleteMessage: (messageId: string) => Promise<void>;
   editMessage: (messageId: string, content: string) => Promise<void>;

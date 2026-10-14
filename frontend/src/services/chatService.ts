@@ -41,6 +41,7 @@ export const chatService = {
     imgUrl?: string,
     conversationId?: string,
     replyTo?: string,
+    fileData?: { fileUrl?: string; fileName?: string; fileType?: string },
   ) {
     const res = await api.post("/messages/direct", {
       recipientId,
@@ -48,6 +49,7 @@ export const chatService = {
       imgUrl,
       conversationId,
       replyTo,
+      ...fileData,
     });
 
     return res.data.message;
@@ -58,14 +60,28 @@ export const chatService = {
     content: string = "",
     imgUrl?: string,
     replyTo?: string,
+    fileData?: { fileUrl?: string; fileName?: string; fileType?: string },
   ) {
     const res = await api.post("/messages/group", {
       conversationId,
       content,
       imgUrl,
       replyTo,
+      ...fileData,
     });
     return res.data.message;
+  },
+
+  async searchMessages(conversationId: string, q: string) {
+    const res = await api.get(
+      `/conversations/${conversationId}/messages/search?q=${encodeURIComponent(q)}`
+    );
+    return res.data;
+  },
+
+  async getUploadSignature() {
+    const res = await api.get("/messages/upload-signature");
+    return res.data;
   },
 
   async deleteMessage(messageId: string) {

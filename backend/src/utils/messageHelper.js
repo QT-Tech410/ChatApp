@@ -8,7 +8,13 @@ export const updateConversationAfterCreateMessage = (
     lastMessageAt: message.createdAt,
     lastMessage: {
       _id: message._id,
-      content: message.content,
+      content:
+        message.content ||
+        (message.imgUrl
+          ? "[Hình ảnh]"
+          : message.fileUrl
+            ? `[Tệp: ${message.fileName || "Tài liệu"}]`
+            : ""),
       senderId,
       createdAt: message.createdAt,
     },

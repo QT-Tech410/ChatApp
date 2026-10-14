@@ -13,7 +13,16 @@ import {
 } from "../ui/dropdown-menu";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { Check, MoreVertical, Pencil, RotateCcw, Trash2, X } from "lucide-react";
+import {
+  Check,
+  Download,
+  FileText,
+  MoreVertical,
+  Pencil,
+  RotateCcw,
+  Trash2,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 
 interface MessageItemProps {
@@ -209,6 +218,29 @@ const MessageItem = ({
                   alt="Tin nhắn ảnh"
                   className="max-h-80 w-full rounded-xl object-cover"
                 />
+              )}
+
+              {/* Tệp tin đính kèm */}
+              {message.fileUrl && !message.isDeleted && (
+                <a
+                  href={message.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2.5 p-2 rounded-lg bg-background/50 hover:bg-background/80 transition-colors border border-border/40 group/file my-1"
+                >
+                  <div className="size-8 rounded bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                    <FileText className="size-4" />
+                  </div>
+                  <div className="flex-1 min-w-0 pr-1">
+                    <p className="text-xs font-medium truncate text-foreground group-hover/file:underline">
+                      {message.fileName || "Tệp đính kèm"}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground uppercase">
+                      {message.fileType || "Tài liệu"}
+                    </p>
+                  </div>
+                  <Download className="size-3.5 text-muted-foreground group-hover/file:text-foreground shrink-0" />
+                </a>
               )}
 
               {message.isDeleted ? (
